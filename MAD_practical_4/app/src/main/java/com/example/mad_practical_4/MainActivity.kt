@@ -4,22 +4,20 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Intent
-import android.icu.util.Calendar
 import android.os.Bundle
 import android.provider.Settings
-import android.view.View
-import android.widget.TextView
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import android.view.View
+import android.widget.TextView
+import android.widget.TextClock
+import android.widget.Toast
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
-import android.widget.TextClock
-import java.util.Locale
-
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -27,7 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnCreate: MaterialButton
     private lateinit var btnCancel: MaterialButton
     private lateinit var textAlarmTime: TextView
-    private lateinit var textClock1: TextClock
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,7 +43,6 @@ class MainActivity : AppCompatActivity() {
         btnCreate = findViewById(R.id.create_alarm)
         btnCancel = findViewById(R.id.stop_alarm)
         textAlarmTime = findViewById(R.id.alarm_time)
-        textClock1 = findViewById(R.id.textClock1)
 
         // Hide alarm card initially
         card2.visibility = View.GONE
@@ -57,6 +54,7 @@ class MainActivity : AppCompatActivity() {
 
         // Cancel alarm button
         btnCancel.setOnClickListener {
+            setAlarm(-1,"Stop")
             card2.visibility = View.GONE
         }
     }
@@ -65,8 +63,8 @@ class MainActivity : AppCompatActivity() {
         val calendar : Calendar = Calendar.getInstance()
         val hour : Int = calendar.get(Calendar.HOUR_OF_DAY)
         val minute : Int = calendar.get(Calendar.MINUTE)
-    //error1
-        val picker = TimePickerDialog(this, { tp, selectedHour, selectedMinute ->
+
+        val picker = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
             setAlarmTime(selectedHour, selectedMinute)
         }, hour, minute, false)
         picker.show()
@@ -80,19 +78,17 @@ class MainActivity : AppCompatActivity() {
         val day: Int= alarmCalendar.get(Calendar.DATE)
 
         alarmCalendar.set(year,month,day,hour,minute,0)
-
-    //error2
-        textAlarmTime.text= SimpleDateFormat("hh:mm ss a",Locale.US).format(alarmCalendar.time)
+        textAlarmTime.text= SimpleDateFormat("hh:mm ss a").format(alarmCalendar.time)
         setAlarm(alarmCalendar.timeInMillis,"Start")
-        card2.visibility = View.VISIBLE
         Toast.makeText(this,"Time set",Toast.LENGTH_SHORT).show()
+        card2.visibility = View.VISIBLE
     }
 
     private fun setAlarm(millisTime:Long,str: String)
     {
         val intent= Intent(this, AlarmBroadcastReceiver::class.java)
         intent.putExtra("Service1",str)
-        val pendingIntent= PendingIntent.getBroadcast(applicationContext,234324243,intent,PendingIntent.FLAG_MUTABLE)
+        val pendingIntent= PendingIntent.getBroadcast(applicationContext,234324243,intent,PendingIntent.FLAG_IMMUTABLE)
         val alarmManager=getSystemService(ALARM_SERVICE) as AlarmManager
         if (str=="Start")
         {
@@ -101,22 +97,17 @@ class MainActivity : AppCompatActivity() {
                 alarmManager.setExact(
                     AlarmManager.RTC_WAKEUP,millisTime,pendingIntent)
                 Toast.makeText(this,"Start Alarm", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this,"Can't set Alarm",Toast.LENGTH_SHORT).show()
-                startActivity((Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)))
             }
-
+            else{
+                Toast.makeText(this,"Can't set Alarm", Toast.LENGTH_SHORT).show()
+                startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
+            }
         }
         else if (str=="Stop")
         {
             alarmManager.cancel(pendingIntent)
             sendBroadcast(intent)
-            Toast.makeText(this, "Stop Alarm", Toast.LENGTH_SHORT).show()
-        }
-
-        btnCancel.setOnClickListener {
-            setAlarm(-1,"Stop")
-            card2.visibility = View.GONE
+            Toast.makeText(this,"Alarm Stopped", Toast.LENGTH_SHORT).show()
         }
     }
 }

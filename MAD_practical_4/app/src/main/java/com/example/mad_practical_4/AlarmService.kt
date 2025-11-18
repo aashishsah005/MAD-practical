@@ -16,7 +16,7 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Toast.makeText(this, "AlarmService started", Toast.LENGTH_SHORT).show()
         if (!this::mediaPlayer.isInitialized) {
-            mediaPlayer = MediaPlayer.create(this, R.raw.lollypop_lagelu)
+            mediaPlayer = MediaPlayer.create(this, R.raw.alarm)
         }
 
         if (intent != null && !mediaPlayer.isPlaying) {
